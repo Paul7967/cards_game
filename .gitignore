@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+commit.bat
+доп.инфа
+
 # dependencies
 /node_modules
 /.pnp
