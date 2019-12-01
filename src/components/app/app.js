@@ -3,15 +3,16 @@ import CardsField from '../cards-field';
 import GetPicturesArray from './fill-arr-functions';
 import AppHeader from '../app-header';
 import './app.sass'
+import GameTimer from '../game-timer/game-timer';
 
 export default class App extends Component {
 	
 	state = {
 		cards: GetPicturesArray(18),
 		active_pair_of_cards: [],
-		pair_is_seeking: false,      // идет поиск пары, т.е. перевернута одна картинка
-		card_timer_value: 0,    // значение таймера между открытием первой и второй карточки
-		card_timer: null
+		game_started: false,
+		founded_pairs_count: 0,      // количество найденных пар
+		pair_is_seeking: false      // идет поиск пары, т.е. перевернута одна картинка
 	}
 
 	ToggleCardParam = (cardNum, cards, paramName) => {
@@ -26,16 +27,22 @@ export default class App extends Component {
 		]
 	};
 
-
 	onCardClick = (cardNum) => {
 		// проверить если кликнутая карта уже перевернута, то пропустить
+		if (!this.state.game_started) {
+			alert('Для начала игры нажмите кнопку «Старт»');
+			return;
+		}
+
+
 		if (this.state.cards[cardNum].hidden) {
-			this.setState(({cards, active_pair_of_cards, pair_is_seeking}) => {
+			this.setState(({cards, active_pair_of_cards, pair_is_seeking, founded_pairs_count}) => {
 
 				let newCards = [...cards];
 				const newActive_pair_of_cards = [...active_pair_of_cards];
 				let newPair_is_seeking = pair_is_seeking;
-				
+				let newFounded_pairs_count = founded_pairs_count;
+
 				switch(newActive_pair_of_cards.length) { 
 					case 0: { // ни одна карта не перевернута:
 						// кладем в массив первую карту и переворачиваем ее
@@ -45,7 +52,6 @@ export default class App extends Component {
 						newCards[cardNum].selected = true;
 						// запускаем счетчик
 						newPair_is_seeking = true;
-						// this.startCardTimer();
 						break; 
 					} 
 					case 1: { 
@@ -57,7 +63,8 @@ export default class App extends Component {
 						//	 2. сравниваем карты, если:
 						const picNumFunc = (id) => newCards[newActive_pair_of_cards[id]].picNum;
 						if (picNumFunc(0)===picNumFunc(1)) {
-							//	- одинаковые, то удаляем 
+							//	- одинаковые, то удаляем и увеличиваем счетчик найденных пар 
+							newFounded_pairs_count += 1;
 							newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'deleted');
 							newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'deleted');
 						} else {
@@ -76,58 +83,56 @@ export default class App extends Component {
 					default: { 
 					// заглушка, чтобы нажатие кнопок не работало в случае когда перевернуто
 						return;
-						break; 
 					} 
 				}; 
 
 				return {
 					cards: newCards,
 					active_pair_of_cards: newActive_pair_of_cards,
-					pair_is_seeking: newPair_is_seeking
+					pair_is_seeking: newPair_is_seeking,
+					founded_pairs_count: newFounded_pairs_count 
 				}
 			});
 		};
 	};
 
-	startCardTimer = () => {
+	onGameStart = () => {
 		
-		let timer = setInterval(() => {
-			const {card_timer_value} = this.state;
-			let timePassed = card_timer_value + 1;
-			if (timePassed===5) {
-				clearInterval(timer);
-				timePassed = 0;
-				
-				// переворачиваем карточку карточку
-				this.setState(() => {
-					const {active_pair_of_cards} = this.state;
-					const cardNum = active_pair_of_cards[0];
-					let newCards = [...this.state.cards];
-					newCards[cardNum].hidden = true;
-					const newActive_pair_of_cards = [...active_pair_of_cards];
-					newActive_pair_of_cards.length = 0;
-					return {
-						active_pair_of_cards: newActive_pair_of_cards,
-						cards: newCards,
-						card_timer_value: timePassed
-					}
-				});
-			} 
-			this.setState({ card_timer_value: timePassed });
-		}, 1000);
-		this.setState({card_timer: timer});
-	};
+		this.setState(({active_pair_of_cards}) => {
+			const newActive_pair_of_cards = [...active_pair_of_cards];
+			newActive_pair_of_cards.length = 0;
+			
+			return {
+				cards: GetPicturesArray(18),
+				active_pair_of_cards: newActive_pair_of_cards,
+				game_started: true
+			}
+		});
+	}
+
+	gameFinish = () => {
+
+	}
 
 	render() {
+		const { cards, founded_pairs_count } = this.state; 
 		return (
 			<div className="app" >
-				<AppHeader />
-				<div>{this.state.card_timer_value}</div>
+				<div>
+					<GameTimer onGameStart={this.onGameStart} />
+					<div style={{ width: "180px", display: "block", "justify-content": "space-around"}} >`Найденных пар: {founded_pairs_count}`</div>
+				</div>
 				<CardsField 
-					data={this.state.cards} 
+					data={ cards } 
 					onCardClick={ this.onCardClick } />
 			</div>
 		)
 	}
 }
 
+
+
+/* <AppHeader 
+					onStartGame={this.onStartGame} 
+					onStopGame={this.onStopGame} 
+					game_timer_value={1} /> */
