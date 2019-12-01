@@ -41,6 +41,8 @@ export default class App extends Component {
 						// кладем в массив первую карту и переворачиваем ее
 						newActive_pair_of_cards.push(cardNum);
 						newCards = this.ToggleCardParam(cardNum, newCards, 'hidden');
+						// newCards = this.ToggleCardParam(cardNum, newCards, 'selected');
+						newCards[cardNum].selected = true;
 						// запускаем счетчик
 						newPair_is_seeking = true;
 						// this.startCardTimer();
@@ -55,14 +57,17 @@ export default class App extends Component {
 						//	 2. сравниваем карты, если:
 						const picNumFunc = (id) => newCards[newActive_pair_of_cards[id]].picNum;
 						if (picNumFunc(0)===picNumFunc(1)) {
-						//	- одинаковые, то фиксируем 
-						newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'deleted');
-						newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'deleted');
-					} else {
+							//	- одинаковые, то удаляем 
+							newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'deleted');
+							newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'deleted');
+						} else {
 						//  - разные, то переворачиваем обе
 							newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'hidden');
 							newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'hidden');
 						}
+						newCards[newActive_pair_of_cards[0]].selected = false;
+						newCards[newActive_pair_of_cards[1]].selected = false;
+
 						newActive_pair_of_cards.length = 0; //   3. чистим массив с перевернутыми карточками
 						newPair_is_seeking = false;         //   4. сбрасываем счетчик
 						
@@ -126,4 +131,3 @@ export default class App extends Component {
 	}
 }
 
-// onCardClick={ this.onCardClick} />

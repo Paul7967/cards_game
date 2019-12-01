@@ -23,8 +23,20 @@ const GetPicturesArray = (countPairs) => {
 	const result = [];
 	
 	for (let i=0, cardNum=0;i<countPairs;i++){
-		result.push({'cardNum':cardNum, 'picNum':arr1[i], 'hidden':true, 'deleted':false});
-		result.push({'cardNum':cardNum+1, 'picNum':arr2[i], 'hidden':true, 'deleted':false});
+		result.push({
+			'cardNum':cardNum, 
+			'picNum':arr1[i], 
+			'hidden':true, 
+			'deleted':false,
+			'selected':false
+		});
+		result.push({
+			'cardNum':cardNum+1, 
+			'picNum':arr2[i], 
+			'hidden':true, 
+			'deleted':false,
+			'selected':false
+		});
 		cardNum +=2;
 	};
 

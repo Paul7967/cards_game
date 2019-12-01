@@ -3,8 +3,8 @@ import './card.sass';
 
 const Card = (props) => {
 	
-		const { picNum, onCardClick, hidden, deleted } = props;
-
+		const { picNum, onCardClick, hidden, deleted, selected } = props;
+		
 		let imgClassNames = 'card__img';
 		let divClassName = 'card';
 		
@@ -13,6 +13,8 @@ const Card = (props) => {
 		} 
 		else if (hidden) {
 			imgClassNames += ' card__img_hidden';
+		} else if (selected) {
+			imgClassNames += ' card__img_selected'
 		}
 
 		const ImgEl = () => {
