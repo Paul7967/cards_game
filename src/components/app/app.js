@@ -6,9 +6,10 @@ import GameTimer from '../game-timer/game-timer';
 
 export default class App extends Component {
 	
+	countPairs = 18;
+
 	state = {
-		cards: GetPicturesArray(18),
-		active_pair_of_cards: [],
+		cards: GetPicturesArray(this.countPairs),
 		founded_pairs_count: 0,      // количество найденных пар
 		pair_is_seeking: false,      // идет поиск пары, т.е. перевернута одна картинка
 		timerVal: 0,
@@ -16,20 +17,6 @@ export default class App extends Component {
 	}
 
 	active_pair_of_cards = [];
-	
-
-	ToggleCardParam = (cardNum, cards, paramName) => {
-		const cardArrayIndex = cardNum;
-		const oldCard = cards[cardArrayIndex];
-		const newCard = { ...oldCard, [paramName]: !oldCard[paramName]};
-
-		return [
-			...cards.slice(0, cardArrayIndex),
-			newCard,
-			...cards.slice(cardArrayIndex+1)
-		]
-	};
-
 	
 	putCardToState = (changedCard) => {
 		const {cards } = this.state;
@@ -78,6 +65,11 @@ export default class App extends Component {
 				'selected':false
 			});
 			this.active_pair_of_cards.length = 0;
+			
+			if (newFounded_pairs_count===this.countPairs) {
+				this.gameWin(this.resetCardsField);
+			}
+		
 		} else { // если картинки на картах разные
 			// переворачиваем обе карты
 			this.putCardToState({
@@ -117,78 +109,31 @@ export default class App extends Component {
 			this.active_pair_of_cards.push(cardNum);
 		}
 		
+		let timerId;
+		if (this.active_pair_of_cards.length === 1) {	// если перевернута 1я карта
+			timerId = setTimeout(this.checkLonleyCard, 5000, cardNum);
+		}
+
 		if (this.active_pair_of_cards.length === 2) {    // если перевернута 2я карта
-			
+			clearInterval(timerId);
 			setTimeout(() => {
 				this.compareAndHandleCards();
 				}, 1000);
 		}
 	}
 
-	onCardClick1 = (cardNum) => {
-		
-		if (!this.gameStarted) return;
-
-		// проверить если кликнутая карта уже перевернута, то пропустить
-		if (this.state.cards[cardNum].hidden) {
-			this.setState(({cards, active_pair_of_cards, pair_is_seeking, founded_pairs_count}) => {
-
-				let newCards = [...cards];
-				const newActive_pair_of_cards = [...active_pair_of_cards];
-				let newPair_is_seeking = pair_is_seeking;
-				let newFounded_pairs_count = founded_pairs_count;
-
-				switch(newActive_pair_of_cards.length) { 
-					case 0: { // ни одна карта не перевернута:
-						// кладем в массив первую карту и переворачиваем ее
-						newActive_pair_of_cards.push(cardNum);
-						newCards = this.ToggleCardParam(cardNum, newCards, 'hidden');
-						newCards[cardNum].selected = true;
-						// запускаем счетчик
-						newPair_is_seeking = true;
-						break; 
-					} 
-					case 1: { 
-						// clearInterval(this.state.timer);
-						// одна карта уже перевернута: 
-						//   1. кладем в массив вторую карту и переворачиваем ее
-						newActive_pair_of_cards.push(cardNum);
-						newCards = this.ToggleCardParam(cardNum, newCards, 'hidden');
-						//	 2. сравниваем карты, если:
-						const picNumFunc = (id) => newCards[newActive_pair_of_cards[id]].picNum;
-						if (picNumFunc(0)===picNumFunc(1)) {
-							//	- одинаковые, то удаляем и увеличиваем счетчик найденных пар 
-							newFounded_pairs_count += 1;
-							newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'deleted');
-							newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'deleted');
-						} else {
-						//  - разные, то переворачиваем обе
-							newCards = this.ToggleCardParam(newActive_pair_of_cards[0], newCards, 'hidden');
-							newCards = this.ToggleCardParam(newActive_pair_of_cards[1], newCards, 'hidden');
-						}
-						newCards[newActive_pair_of_cards[0]].selected = false;
-						newCards[newActive_pair_of_cards[1]].selected = false;
-
-						newActive_pair_of_cards.length = 0; //   3. чистим массив с перевернутыми карточками
-						newPair_is_seeking = false;         //   4. сбрасываем счетчик
-						
-						break; 
-					} 
-					default: { 
-					// заглушка, чтобы нажатие кнопок не работало в случае когда перевернуто
-						return;
-					} 
-				}; 
-
-				return {
-					cards: newCards,
-					active_pair_of_cards: newActive_pair_of_cards,
-					pair_is_seeking: newPair_is_seeking,
-					founded_pairs_count: newFounded_pairs_count 
-				}
+	checkLonleyCard = (cardNum) => {
+		if ((this.active_pair_of_cards.length === 1)&&(this.active_pair_of_cards[0] === cardNum)) {
+			this.active_pair_of_cards.length = 0;
+			this.putCardToState({
+				'cardNum':cardNum, 
+				'picNum':this.state.cards[cardNum].picNum,
+				'hidden':true, 
+				'deleted':false,
+				'selected':true
 			});
-		};
-	};
+		}
+	}
 
 	gameStarted = () => {
 		if (this.state.timerId === null) {
@@ -224,40 +169,38 @@ export default class App extends Component {
 		};
 	}
 
-	onGameStart = () => {
-		this.runTimer();		
+	resetCardsField = () => {
+		this.active_pair_of_cards.length = 0;
+		this.setState({ cards: GetPicturesArray(this.countPairs), timerVal: 0 });
+		this.stopTimer();
+	}
 
-		this.setState(({active_pair_of_cards}) => {
-			const newActive_pair_of_cards = [...active_pair_of_cards];
-			newActive_pair_of_cards.length = 0;
-			
-			return {
-				cards: GetPicturesArray(18),
-				active_pair_of_cards: newActive_pair_of_cards
-			}
-		});
+	onGameStart = () => {
+		this.resetCardsField();
+		this.runTimer();		
 	}
 
 	onGameStop = () => {
 		this.stopTimer();
 	}
 
-	gameFinish = () => {
-		alert('Поздравляем, ваше время: ', this.state.timerVal)
+	gameWin = (callback) => {
+		alert(`Поздравляем, ваше время: ${this.state.timerVal} секунд`);
+		callback();
 	}
 
 	render() {
 		const { cards, founded_pairs_count } = this.state; 
 		return (
 			<div className="app" >
-				<div>
+				<div className={"app__header"}>
 					<GameTimer 
 						timerVal={this.state.timerVal} 
 						onGameStart={this.onGameStart}
 						onGameStop={this.onGameStop}
 					/>
-					<div style={{ width: "180px", display: "block", justifyCcontent: "space-around"}} > 
-						{`Найденных пар: ${founded_pairs_count}`}
+					<div className={"app__text"}> 
+						{`Найденно пар: ${founded_pairs_count} из ${this.countPairs}`}
 					</div>
 				</div>
 				
