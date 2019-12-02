@@ -171,7 +171,11 @@ export default class App extends Component {
 
 	resetCardsField = () => {
 		this.active_pair_of_cards.length = 0;
-		this.setState({ cards: GetPicturesArray(this.countPairs), timerVal: 0 });
+		this.setState({ 
+			cards: GetPicturesArray(this.countPairs), 
+			timerVal: 0,
+			founded_pairs_count: 0	 
+		});
 		this.stopTimer();
 	}
 
